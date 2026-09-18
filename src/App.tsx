@@ -25,7 +25,7 @@ function Workspace() {
   const [page, setPage] = useState<PageKey>("feed");
   return (
     <AppShell page={page} onNavigate={setPage}>
-      {page === "feed" && <HomePage />}
+      {page === "feed" && <HomePage onNavigate={setPage} />}
       {page === "studio" && <StudioPage />}
       {page === "recorder" && <RecorderPage />}
       {page === "friends" && <FriendsPage />}

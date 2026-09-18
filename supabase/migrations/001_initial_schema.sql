@@ -3,7 +3,7 @@
 
 create extension if not exists pgcrypto;
 
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text not null check (username ~ '^[A-Za-z0-9_]{3,24}$'),
   display_name text not null default '未命名选手' check (char_length(display_name) between 1 and 40),
@@ -15,9 +15,9 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
-create unique index profiles_username_unique on public.profiles (lower(username));
+create unique index if not exists profiles_username_unique on public.profiles (lower(username));
 
-create table public.friendships (
+create table if not exists public.friendships (
   id uuid primary key default gen_random_uuid(),
   requester_id uuid not null references public.profiles(id) on delete cascade,
   addressee_id uuid not null references public.profiles(id) on delete cascade,
@@ -28,10 +28,10 @@ create table public.friendships (
   check (requester_id <> addressee_id)
 );
 
-create index friendships_requester_idx on public.friendships (requester_id, status);
-create index friendships_addressee_idx on public.friendships (addressee_id, status);
+create index if not exists friendships_requester_idx on public.friendships (requester_id, status);
+create index if not exists friendships_addressee_idx on public.friendships (addressee_id, status);
 
-create table public.clips (
+create table if not exists public.clips (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
   title text not null check (char_length(title) between 1 and 80),
@@ -50,17 +50,17 @@ create table public.clips (
   updated_at timestamptz not null default now()
 );
 
-create index clips_user_created_idx on public.clips (user_id, created_at desc);
-create index clips_visibility_created_idx on public.clips (visibility, created_at desc);
+create index if not exists clips_user_created_idx on public.clips (user_id, created_at desc);
+create index if not exists clips_visibility_created_idx on public.clips (visibility, created_at desc);
 
-create table public.clip_likes (
+create table if not exists public.clip_likes (
   clip_id uuid not null references public.clips(id) on delete cascade,
   user_id uuid not null references public.profiles(id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (clip_id, user_id)
 );
 
-create table public.clip_comments (
+create table if not exists public.clip_comments (
   id uuid primary key default gen_random_uuid(),
   clip_id uuid not null references public.clips(id) on delete cascade,
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -68,7 +68,7 @@ create table public.clip_comments (
   created_at timestamptz not null default now()
 );
 
-create index clip_comments_clip_created_idx on public.clip_comments (clip_id, created_at);
+create index if not exists clip_comments_clip_created_idx on public.clip_comments (clip_id, created_at);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -81,10 +81,13 @@ begin
 end;
 $$;
 
+drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at before update on public.profiles
 for each row execute function public.set_updated_at();
+drop trigger if exists friendships_updated_at on public.friendships;
 create trigger friendships_updated_at before update on public.friendships
 for each row execute function public.set_updated_at();
+drop trigger if exists clips_updated_at on public.clips;
 create trigger clips_updated_at before update on public.clips
 for each row execute function public.set_updated_at();
 
@@ -164,6 +167,7 @@ begin
 end;
 $$;
 
+drop trigger if exists clip_like_count_changed on public.clip_likes;
 create trigger clip_like_count_changed
 after insert or delete on public.clip_likes
 for each row execute function public.sync_clip_like_count();
@@ -185,6 +189,7 @@ begin
 end;
 $$;
 
+drop trigger if exists clip_comment_count_changed on public.clip_comments;
 create trigger clip_comment_count_changed
 after insert or delete on public.clip_comments
 for each row execute function public.sync_clip_comment_count();
@@ -195,31 +200,38 @@ alter table public.clips enable row level security;
 alter table public.clip_likes enable row level security;
 alter table public.clip_comments enable row level security;
 
+drop policy if exists "authenticated users can view profiles" on public.profiles;
 create policy "authenticated users can view profiles"
 on public.profiles for select to authenticated
 using (true);
 
+drop policy if exists "users can update own profile" on public.profiles;
 create policy "users can update own profile"
 on public.profiles for update to authenticated
 using (id = auth.uid()) with check (id = auth.uid());
 
+drop policy if exists "users can view own friendships" on public.friendships;
 create policy "users can view own friendships"
 on public.friendships for select to authenticated
 using (requester_id = auth.uid() or addressee_id = auth.uid());
 
+drop policy if exists "users can request friendship" on public.friendships;
 create policy "users can request friendship"
 on public.friendships for insert to authenticated
 with check (requester_id = auth.uid() and status = 'pending');
 
+drop policy if exists "addressees can answer friendship requests" on public.friendships;
 create policy "addressees can answer friendship requests"
 on public.friendships for update to authenticated
 using (addressee_id = auth.uid())
 with check (addressee_id = auth.uid() and status in ('accepted', 'pending'));
 
+drop policy if exists "participants can remove friendship" on public.friendships;
 create policy "participants can remove friendship"
 on public.friendships for delete to authenticated
 using (requester_id = auth.uid() or addressee_id = auth.uid());
 
+drop policy if exists "visible clips can be read" on public.clips;
 create policy "visible clips can be read"
 on public.clips for select to authenticated
 using (
@@ -228,19 +240,23 @@ using (
   or (status = 'published' and visibility = 'friends' and public.are_friends(user_id, auth.uid()))
 );
 
+drop policy if exists "users can create own clips" on public.clips;
 create policy "users can create own clips"
 on public.clips for insert to authenticated
 with check (user_id = auth.uid());
 
+drop policy if exists "users can update own clips" on public.clips;
 create policy "users can update own clips"
 on public.clips for update to authenticated
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "users can delete own clips" on public.clips;
 create policy "users can delete own clips"
 on public.clips for delete to authenticated
 using (user_id = auth.uid());
 
+drop policy if exists "visible likes can be read" on public.clip_likes;
 create policy "visible likes can be read"
 on public.clip_likes for select to authenticated
 using (
@@ -248,6 +264,7 @@ using (
   or exists (select 1 from public.clips where clips.id = clip_likes.clip_id)
 );
 
+drop policy if exists "users can like visible clips" on public.clip_likes;
 create policy "users can like visible clips"
 on public.clip_likes for insert to authenticated
 with check (
@@ -255,10 +272,12 @@ with check (
   and exists (select 1 from public.clips where clips.id = clip_likes.clip_id)
 );
 
+drop policy if exists "users can remove own likes" on public.clip_likes;
 create policy "users can remove own likes"
 on public.clip_likes for delete to authenticated
 using (user_id = auth.uid());
 
+drop policy if exists "visible comments can be read" on public.clip_comments;
 create policy "visible comments can be read"
 on public.clip_comments for select to authenticated
 using (
@@ -266,6 +285,7 @@ using (
   or exists (select 1 from public.clips where clips.id = clip_comments.clip_id)
 );
 
+drop policy if exists "users can comment on visible clips" on public.clip_comments;
 create policy "users can comment on visible clips"
 on public.clip_comments for insert to authenticated
 with check (
@@ -273,6 +293,7 @@ with check (
   and exists (select 1 from public.clips where clips.id = clip_comments.clip_id)
 );
 
+drop policy if exists "users can delete own comments" on public.clip_comments;
 create policy "users can delete own comments"
 on public.clip_comments for delete to authenticated
 using (user_id = auth.uid());
@@ -309,6 +330,7 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
+drop policy if exists "users upload own highlight files" on storage.objects;
 create policy "users upload own highlight files"
 on storage.objects for insert to authenticated
 with check (
@@ -316,6 +338,7 @@ with check (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "visible highlight files can be read" on storage.objects;
 create policy "visible highlight files can be read"
 on storage.objects for select to authenticated
 using (
@@ -334,6 +357,7 @@ using (
   )
 );
 
+drop policy if exists "users update own highlight files" on storage.objects;
 create policy "users update own highlight files"
 on storage.objects for update to authenticated
 using (
@@ -345,6 +369,7 @@ with check (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "users delete own highlight files" on storage.objects;
 create policy "users delete own highlight files"
 on storage.objects for delete to authenticated
 using (
@@ -352,10 +377,12 @@ using (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "public can read avatars" on storage.objects;
 create policy "public can read avatars"
 on storage.objects for select to public
 using (bucket_id = 'avatars');
 
+drop policy if exists "users upload own avatars" on storage.objects;
 create policy "users upload own avatars"
 on storage.objects for insert to authenticated
 with check (
@@ -363,6 +390,7 @@ with check (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "users update own avatars" on storage.objects;
 create policy "users update own avatars"
 on storage.objects for update to authenticated
 using (
@@ -374,6 +402,7 @@ with check (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "users delete own avatars" on storage.objects;
 create policy "users delete own avatars"
 on storage.objects for delete to authenticated
 using (
