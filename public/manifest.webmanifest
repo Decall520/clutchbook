@@ -1,0 +1,28 @@
+{
+  "id": "./",
+  "name": "集火 · 无畏契约集锦空间",
+  "short_name": "集火",
+  "description": "录制、上传、整理并分享无畏契约高光集锦。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#08111d",
+  "theme_color": "#08111d",
+  "categories": ["games", "social", "entertainment"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
