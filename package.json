@@ -1,0 +1,71 @@
+{
+  "name": "clutchbook",
+  "version": "0.1.0",
+  "description": "无畏契约高光录制、整理与好友分享网站及 PWA",
+  "main": "electron/main.cjs",
+  "author": "Clutchbook Studio",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev:web": "vite --config vite.config.ts --configLoader runner --host 127.0.0.1",
+    "dev": "concurrently -k \"npm run dev:web\" \"wait-on http://127.0.0.1:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
+    "build:web": "tsc -b && vite build --config vite.config.ts --configLoader runner",
+    "build": "npm run build:web && electron-builder --win nsis portable",
+    "preview": "vite preview --config vite.config.ts --configLoader runner --host 127.0.0.1 --port 4173",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^35.0.1",
+    "electron-builder": "^26.0.12",
+    "typescript": "~5.7.3",
+    "vite": "^6.2.0",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "cn.clutchbook.desktop",
+    "electronDist": "node_modules/electron/dist",
+    "productName": "集火",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "Clutchbook-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "集火",
+      "artifactName": "Clutchbook-Setup-${version}.${ext}"
+    }
+  }
+}
