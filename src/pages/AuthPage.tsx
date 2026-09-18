@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
-import { isSupabaseConfigured, saveRuntimeSupabaseConfig } from "../lib/supabase";
+import { isSupabaseConfigured } from "../lib/supabase";
 import { Icon } from "../components/Icon";
 
 type Mode = "login" | "register";
 
 export function AuthPage() {
-  const { signIn, signUp, enterDemo, requestPasswordReset } = useAuth();
+  const { signIn, signUp, requestPasswordReset } = useAuth();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,9 +15,6 @@ export function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [showSetup, setShowSetup] = useState(false);
-  const [supabaseUrl, setSupabaseUrl] = useState("");
-  const [supabaseKey, setSupabaseKey] = useState("");
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -63,16 +60,6 @@ export function AuthPage() {
     }
   }
 
-  function storeBackendConfig() {
-    setError("");
-    try {
-      saveRuntimeSupabaseConfig(supabaseUrl, supabaseKey);
-      setNotice("后端配置已保存，正在重新载入…");
-      window.setTimeout(() => window.location.reload(), 500);
-    } catch (configError) {
-      setError(configError instanceof Error ? configError.message : "配置保存失败");
-    }
-  }
 
   return (
     <main className="auth-page">
@@ -198,54 +185,20 @@ export function AuthPage() {
             {notice && <div className="form-message form-success">{notice}</div>}
 
             <button className="button button-primary auth-submit" disabled={busy || !isSupabaseConfigured}>
-              {busy ? "处理中…" : mode === "login" ? "进入集火" : "创建账号"}
+              {busy ? "处理中…" : !isSupabaseConfigured ? "服务准备中" : mode === "login" ? "进入集火" : "创建账号"}
               {!busy && <Icon name="chevron" size={18} />}
             </button>
           </form>
 
           {!isSupabaseConfigured && (
-            <div className="runtime-config">
-              <div className="setup-notice">
-                <Icon name="settings" size={18} />
-                <div>
-                  <strong>先连接你的 Supabase 项目</strong>
-                  <p>可直接在这里填写，也可以开发时写入 <code>.env</code>。anon key 是公开客户端密钥，数据权限仍由数据库 RLS 控制。</p>
-                </div>
+            <div className="service-state">
+              <Icon name="shield" size={18} />
+              <div>
+                <strong>云端服务准备中</strong>
+                <p>账号、上传与好友功能暂时不可用，请稍后再试。</p>
               </div>
-              <button className="text-button runtime-config-toggle" onClick={() => setShowSetup((value) => !value)}>
-                {showSetup ? "收起配置" : "填写后端配置"}
-              </button>
-              {showSetup && (
-                <div className="runtime-config-form">
-                  <label>
-                    Project URL
-                    <input
-                      value={supabaseUrl}
-                      onChange={(event) => setSupabaseUrl(event.target.value)}
-                      placeholder="https://your-project.supabase.co"
-                    />
-                  </label>
-                  <label>
-                    anon public key
-                    <input
-                      type="password"
-                      value={supabaseKey}
-                      onChange={(event) => setSupabaseKey(event.target.value)}
-                      placeholder="eyJhbGciOi…"
-                    />
-                  </label>
-                  <button type="button" className="button button-primary" onClick={storeBackendConfig} disabled={!supabaseUrl.trim() || !supabaseKey.trim()}>
-                    保存并启用云端
-                  </button>
-                </div>
-              )}
             </div>
           )}
-
-          <button className="button button-demo" onClick={enterDemo}>
-            <Icon name="play" size={17} />
-            进入界面预览
-          </button>
           <p className="auth-legal">登录即表示你同意仅上传本人有权分享的游戏录像。</p>
         </div>
       </section>

@@ -12,7 +12,6 @@
 - 公开、仅好友、仅自己三种可见范围
 - 好友搜索、申请、接受、拒绝和删除
 - 个人集锦空间、可见范围管理、点赞与评论
-- 未配置后端时可进入交互式演示模式
 - Electron Builder 生成 NSIS 安装包和便携版
 
 > 集火是非 Riot Games 官方产品。名称、图片和录像的上传责任由用户承担。
@@ -42,7 +41,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-未配置 `.env` 时，可以在登录页“填写后端配置”直接粘贴 Supabase Project URL 和 anon public key；保存后应用会自动重载并启用真实云端。也可以先进入界面预览，演示数据只存在当前运行内存中。
+开发环境复制 `.env.example` 为 `.env` 并填写 Supabase 配置。未配置时，登录页会显示服务准备状态。
 
 ## 配置 Supabase
 

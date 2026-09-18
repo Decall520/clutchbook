@@ -23,7 +23,6 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (input: RegisterInput) => Promise<{ needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
-  enterDemo: () => void;
   requestPasswordReset: (email: string) => Promise<void>;
 }
 
@@ -41,7 +40,7 @@ function translateAuthError(message: string) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(false);
+  const isDemo = false;
 
   useEffect(() => {
     if (!supabase) {
@@ -74,13 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       isDemo,
       async signIn(email, password) {
-        if (!supabase) throw new Error("尚未配置 Supabase，请先使用界面预览");
+        if (!supabase) throw new Error("云端服务暂不可用，请稍后再试");
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(translateAuthError(error.message));
-        setIsDemo(false);
       },
       async signUp({ email, password, username, displayName }) {
-        if (!supabase) throw new Error("尚未配置 Supabase，请先使用界面预览");
+        if (!supabase) throw new Error("云端服务暂不可用，请稍后再试");
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -92,27 +90,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         });
         if (error) throw new Error(translateAuthError(error.message));
-        setIsDemo(false);
         return { needsConfirmation: !data.session };
       },
       async signOut() {
-        if (supabase && !isDemo) await supabase.auth.signOut();
+        if (supabase) await supabase.auth.signOut();
         setUser(null);
-        setIsDemo(false);
       },
-      enterDemo() {
-        setIsDemo(true);
-        setUser({ id: "demo-me", email: "preview@clutchbook.local" });
-      },
+
       async requestPasswordReset(email) {
-        if (!supabase) throw new Error("尚未配置 Supabase");
+        if (!supabase) throw new Error("云端服务暂不可用，请稍后再试");
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/?mode=reset-password`
         });
         if (error) throw new Error(translateAuthError(error.message));
       }
     }),
-    [isDemo, loading, user]
+    [loading, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

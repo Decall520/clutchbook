@@ -3444,3 +3444,30 @@ h3 {
   font-size: 10px;
   line-height: 1.65;
 }
+
+.service-state {
+  display: flex;
+  gap: 11px;
+  margin-top: 16px;
+  padding: 13px;
+  border-left: 2px solid var(--yellow);
+  color: var(--muted-strong);
+  background: rgba(255, 198, 90, 0.055);
+  font-size: 11px;
+}
+
+.service-state > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--yellow);
+}
+
+.service-state strong {
+  display: block;
+  color: var(--paper);
+}
+
+.service-state p {
+  margin: 4px 0 0;
+  line-height: 1.6;
+}

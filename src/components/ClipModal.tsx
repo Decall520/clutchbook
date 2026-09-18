@@ -76,8 +76,8 @@ export function ClipModal({ clip, onClose }: ClipModalProps) {
             <div className="modal-player-empty">
               <span className="poster-radar" />
               <Icon name="play" size={34} />
-              <strong>演示集锦暂未附带视频</strong>
-              <p>进入演示模式并上传本地视频，即可在这里直接播放。</p>
+              <strong>视频暂时不可用</strong>
+              <p>请稍后刷新页面，或联系集锦作者。</p>
             </div>
           )}
           <span className="modal-duration">{formatDuration(clip.duration_seconds)}</span>

@@ -29,7 +29,7 @@ const pageCopy: Record<PageKey, { title: string; subtitle: string }> = {
 
 export function AppShell({ page, onNavigate, children }: AppShellProps) {
   const { currentProfile, incomingRequests } = useAppData();
-  const { isDemo, signOut } = useAuth();
+  const { signOut } = useAuth();
   const copy = pageCopy[page];
 
   return (
@@ -70,7 +70,7 @@ export function AppShell({ page, onNavigate, children }: AppShellProps) {
           <Avatar profile={currentProfile} size="md" />
           <span>
             <strong>{currentProfile?.display_name || "选手"}</strong>
-            <small>{isDemo ? "界面预览" : `@${currentProfile?.username || "player"}`}</small>
+            <small>@{currentProfile?.username || "player"}</small>
           </span>
           <Icon name="chevron" size={16} />
         </button>
@@ -88,7 +88,6 @@ export function AppShell({ page, onNavigate, children }: AppShellProps) {
             <p>{copy.subtitle}</p>
           </div>
           <div className="topbar-actions">
-            {isDemo && <span className="demo-pill">演示模式</span>}
             <button className="icon-button" onClick={() => onNavigate("friends")} aria-label="好友通知">
               <Icon name="bell" />
               {incomingRequests.length > 0 && <i />}
