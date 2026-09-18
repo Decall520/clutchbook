@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async requestPasswordReset(email) {
         if (!supabase) throw new Error("云端服务暂不可用，请稍后再试");
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/?mode=reset-password`
+          redirectTo: `${window.location.origin}${window.location.pathname}?mode=reset-password`
         });
         if (error) throw new Error(translateAuthError(error.message));
       }
